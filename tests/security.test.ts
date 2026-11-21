@@ -160,13 +160,13 @@ describe("Bounds, variants, pricing & CAPI URL validation", () => {
   });
 
   it("validates Meta CAPI source URLs against host injection", () => {
-    const valid = new Headers({ origin: "https://topjoint.tn" });
-    assert.equal(resolveSourceUrl(valid, "/fr/commande"), "https://topjoint.tn/fr/commande");
+    const valid = new Headers({ origin: "https://topjoint.shop" });
+    assert.equal(resolveSourceUrl(valid, "/fr/commande"), "https://topjoint.shop/fr/commande");
 
     const spoofedHost = new Headers({ "x-forwarded-host": "evil.tld/attacker" });
     assert.equal(resolveSourceUrl(spoofedHost, "/fr"), "");
 
-    const invalidProto = new Headers({ origin: "ftp://topjoint.tn" });
+    const invalidProto = new Headers({ origin: "ftp://topjoint.shop" });
     assert.equal(resolveSourceUrl(invalidProto, "/fr"), "");
   });
 });

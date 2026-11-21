@@ -7,12 +7,12 @@ export const site = {
 };
 
 export function getSiteUrl(): string {
-  const raw = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://topjoint.tn").trim();
+  const raw = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://topjoint.shop").trim();
   try {
     const parsed = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
     return parsed.origin;
   } catch {
-    return "https://topjoint.tn";
+    return "https://topjoint.shop";
   }
 }
 
