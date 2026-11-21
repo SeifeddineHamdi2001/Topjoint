@@ -3,10 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { applications, categories, currency, formatPrice, formatThickness, labelOf, startingPriceMillimes } from "@/config/catalog";
-import { isLocale, type Locale } from "@/config/site";
+import { getSiteUrl, isLocale, site, type Locale } from "@/config/site";
 import { getDictionary } from "@/i18n";
 import { toCartProduct } from "@/lib/cartProduct";
 import { db } from "@/lib/db";
+import { localeAlternates, safeJsonLd } from "@/lib/seo";
 import { resolveProductVariants } from "@/lib/variants";
 import { ProductBuyBox } from "@/components/cart/ProductBuyBox";
 import { Icon } from "@/components/Icon";
@@ -44,7 +45,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
   const product = await load(slug);
   if (!product) return {};
-  return { title: lang === "ar" ? product.nameAr : product.nameFr };
+  const l: Locale = isLocale(lang) ? lang : "fr";
+  const name = l === "ar" ? product.nameAr : product.nameFr;
+  const rawDesc = (l === "ar" ? product.descriptionAr : product.descriptionFr).trim();
+  const fallbackDesc = [name, product.ref, labelOf(categories, product.category, l), product.compatibility, product.dimensions]
+    .filter(Boolean)
+    .join(" · ");
+  const description = (rawDesc || fallbackDesc).slice(0, 160);
+  const image = product.image || "/hero.jpg";
+
+  return {
+    title: name,
+    description,
+    alternates: localeAlternates(l, `/produits/${product.slug}`),
+    openGraph: {
+      type: "website",
+      title: name,
+      description,
+      url: `/${l}/produits/${product.slug}`,
+      images: [{ url: image, alt: name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: name,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function ProductPage({ params, searchParams }: Props) {
@@ -97,6 +124,58 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const description = lang === "ar" ? product.descriptionAr : product.descriptionFr;
   const inStock = product.stock > 0;
   const variants = resolveProductVariants(product);
+  const siteUrl = getSiteUrl();
+  const productUrl = `${siteUrl}/${lang}/produits/${product.slug}`;
+  const productImage = product.image
+    ? product.image.startsWith("http")
+      ? product.image
+      : `${siteUrl}${product.image}`
+    : `${siteUrl}/hero.jpg`;
+  const variantPrices = variants.length ? variants.map((v) => v.priceMillimes) : [product.priceMillimes];
+  const minPriceMillimes = Math.min(...variantPrices);
+  const maxPriceMillimes = Math.max(...variantPrices);
+  const availability = inStock ? "https://schema.org/InStock" : "https://schema.org/PreOrder";
+
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    sku: product.ref,
+    mpn: product.ref,
+    category: labelOf(categories, product.category, lang),
+    description: (description || [name, product.ref, product.compatibility, product.dimensions].filter(Boolean).join(" · ")).slice(0, 500),
+    image: [productImage],
+    brand: { "@type": "Brand", name: site.name },
+    offers:
+      variantPrices.length > 1 && minPriceMillimes !== maxPriceMillimes
+        ? {
+            "@type": "AggregateOffer",
+            priceCurrency: "TND",
+            lowPrice: (minPriceMillimes / 1000).toFixed(3),
+            highPrice: (maxPriceMillimes / 1000).toFixed(3),
+            offerCount: variantPrices.length,
+            availability,
+            url: productUrl,
+          }
+        : {
+            "@type": "Offer",
+            priceCurrency: "TND",
+            price: (minPriceMillimes / 1000).toFixed(3),
+            availability,
+            url: productUrl,
+          },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: t.header.nav.home, item: `${siteUrl}/${lang}` },
+      { "@type": "ListItem", position: 2, name: t.header.nav.products, item: `${siteUrl}/${lang}/produits` },
+      { "@type": "ListItem", position: 3, name, item: productUrl },
+    ],
+  };
+
   const variantLabel = isCombo ? t.product.comboVariants : t.product.thickness;
   const variantTile = variants.length ? variants.map((variant) => formatThickness(variant.mm, lang)).join(" / ") : "";
   const tiles: [string, string][] = [
@@ -117,6 +196,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
       <MetaViewContent productRef={product.ref} priceTnd={startingPriceMillimes(product) / 1000} />
       <nav className="flex flex-wrap items-center gap-2 font-label-code text-label-code uppercase text-on-surface-variant mb-6">
         <Link href={`/${lang}`} className="hover:text-primary">{t.header.nav.home}</Link>

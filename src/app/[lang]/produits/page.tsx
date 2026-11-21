@@ -6,6 +6,7 @@ import { isLocale, type Locale } from "@/config/site";
 import { getDictionary } from "@/i18n";
 import { getCachedCatalogFacets } from "@/lib/catalogCache";
 import { db, textSearch, toInt32 } from "@/lib/db";
+import { localeAlternates } from "@/lib/seo";
 import { resolveProductVariants } from "@/lib/variants";
 import { Icon } from "@/components/Icon";
 import { FilterDisclosure } from "@/components/site/FilterDisclosure";
@@ -21,7 +22,19 @@ type Props = { params: Promise<{ lang: string }>; searchParams: Promise<SearchPa
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  return { title: getDictionary(isLocale(lang) ? lang : "fr").catalog.title };
+  const l: Locale = isLocale(lang) ? lang : "fr";
+  const t = getDictionary(l);
+  return {
+    title: t.catalog.title,
+    description: t.catalog.text,
+    alternates: localeAlternates(l, "/produits"),
+    openGraph: {
+      type: "website",
+      title: t.catalog.title,
+      description: t.catalog.text,
+      url: `/${l}/produits`,
+    },
+  };
 }
 
 const sorts: Record<string, Prisma.ProductOrderByWithRelationInput> = {

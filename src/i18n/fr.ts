@@ -202,7 +202,7 @@ export const fr = {
     workshop: "Atelier & horaires",
     hours: "Lundi - Samedi : 08h00 - 18h00",
     rights: "Tous droits réservés.",
-    legal: ["Conditions générales de vente", "Politique de confidentialité", "Livraison & retours", "Mentions légales"],
+    privacyLink: "Politique de confidentialité",
   },
   catalog: {
     breadcrumb: "Boutique & catalogue",
@@ -372,7 +372,7 @@ export const fr = {
       },
       {
         title: "4. Vos droits",
-        body: "Vous pouvez demander l'accès, la rectification ou la suppression de vos données personnelles à tout moment en contactant l'atelier par e-mail ou par téléphone.",
+        body: "Vous pouvez demander l'accès, la rectification ou la suppression de vos données personnelles à tout moment en contactant l'atelier par téléphone ou via WhatsApp.",
       },
     ],
     contactLabel: "Contact confidentialité :",

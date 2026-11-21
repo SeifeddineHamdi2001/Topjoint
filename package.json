@@ -11,12 +11,13 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "setup": "prisma migrate deploy",
+    "icons:update": "node scripts/update-icons-font.mjs",
     "test:security": "tsx --env-file-if-exists=.env --import ./tests/setup.ts --test tests/security.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "jose": "^6.2.13",
-    "next": "^16.4.3",
+    "next": "^16.4.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "^0.0.1",

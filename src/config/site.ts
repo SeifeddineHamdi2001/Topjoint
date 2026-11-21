@@ -1,12 +1,20 @@
-// Business details shown across the site. Replace the placeholders with the real ones.
+// Business details shown across the site.
 export const site = {
   name: "Top Joint",
-  phone: "+216 71 000 000",
-  phone2: "+216 98 000 000",
-  whatsapp: "21698000000", // international format without "+", used for wa.me links
-  email: "contact@topjoint.tn",
+  phone: "+216 20 831 260",
+  whatsapp: "21620831260", // international format without "+", used for wa.me links
   mapsQuery: "Zone Industrielle Ben Arous Tunis Tunisie",
 };
+
+export function getSiteUrl(): string {
+  const raw = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://topjoint.tn").trim();
+  try {
+    const parsed = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+    return parsed.origin;
+  } catch {
+    return "https://topjoint.tn";
+  }
+}
 
 export const locales = ["fr", "ar"] as const;
 export type Locale = (typeof locales)[number];

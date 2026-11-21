@@ -51,14 +51,19 @@ export function Footer({ lang, t, logoImage = "" }: { lang: Locale; t: Dictionar
             </p>
             <p className="flex items-center gap-2">
               <Icon name="call" className="text-[18px] text-secondary-container" />
-              <span dir="ltr">
-                {site.phone} / {site.phone2}
-              </span>
+              <a href={`tel:${site.phone.replace(/\s/g, "")}`} dir="ltr" className="hover:text-on-primary transition-colors">
+                {site.phone}
+              </a>
             </p>
             <p className="flex items-center gap-2">
-              <Icon name="mail" className="text-[18px] text-secondary-container" />
-              <a href={`mailto:${site.email}`} className="hover:text-on-primary">
-                {site.email}
+              <Icon name="chat" className="text-[18px] text-secondary-container" />
+              <a
+                href={`https://wa.me/${site.whatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-on-primary transition-colors"
+              >
+                {t.topbar.whatsapp}
               </a>
             </p>
             <p className="flex items-center gap-2">
@@ -71,15 +76,9 @@ export function Footer({ lang, t, logoImage = "" }: { lang: Locale; t: Dictionar
       <div className="w-full bg-primary">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-label-code text-label-code">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            {t.footer.legal.map((label, i) =>
-              i === 1 ? (
-                <Link key={label} href={`${base}/confidentialite`} className="hover:text-on-primary underline underline-offset-4 transition-colors">
-                  {label}
-                </Link>
-              ) : (
-                <span key={label}>{label}</span>
-              ),
-            )}
+            <Link href={`${base}/confidentialite`} className="hover:text-on-primary underline underline-offset-4 transition-colors">
+              {t.footer.privacyLink}
+            </Link>
           </div>
           <div className="flex items-center gap-3">
             <span>

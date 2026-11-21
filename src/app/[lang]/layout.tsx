@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Cairo, Geist, Hanken_Grotesk, IBM_Plex_Sans_Arabic } from "next/font/google";
-import { isLocale, locales } from "@/config/site";
+import { getSiteUrl, isLocale, locales, site } from "@/config/site";
 import { getDictionary } from "@/i18n";
+import { localeAlternates } from "@/lib/seo";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Header } from "@/components/site/Header";
@@ -28,10 +29,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = getDictionary(lang);
+  const ogLocale = lang === "ar" ? "ar_TN" : "fr_TN";
+  const ogAlternate = lang === "ar" ? "fr_TN" : "ar_TN";
+  const keywords =
+    lang === "ar"
+      ? ["توب جوانت", "حشايا صناعية", "حشية رأس المحرك", "حشية القميص", "قص الحشايا حسب الطلب", "تونس"]
+      : ["Top Joint", "joints industriels", "joint de culasse", "joint de chemise", "découpe sur mesure", "Tunisie"];
+
   return {
-    title: { default: t.meta.title, template: `%s — Top Joint` },
+    metadataBase: new URL(getSiteUrl()),
+    title: { default: t.meta.title, template: `%s — ${site.name}` },
     description: t.meta.description,
-    alternates: { languages: { fr: "/fr", ar: "/ar" } },
+    keywords,
+    alternates: localeAlternates(lang, ""),
+    openGraph: {
+      type: "website",
+      siteName: site.name,
+      locale: ogLocale,
+      alternateLocale: ogAlternate,
+      title: t.meta.title,
+      description: t.meta.description,
+      url: `/${lang}`,
+      images: [{ url: "/hero.jpg", width: 1200, height: 630, alt: t.meta.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t.meta.title,
+      description: t.meta.description,
+      images: ["/hero.jpg"],
+    },
+    robots: { index: true, follow: true },
   };
 }
 

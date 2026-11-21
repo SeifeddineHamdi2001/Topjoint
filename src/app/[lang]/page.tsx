@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { isLocale, site, type Locale } from "@/config/site";
+import { getSiteUrl, isLocale, site, type Locale } from "@/config/site";
 import { getDictionary } from "@/i18n";
 import { getCachedFeaturedProducts } from "@/lib/catalogCache";
+import { localeAlternates, safeJsonLd } from "@/lib/seo";
 import { Icon } from "@/components/Icon";
 import { ProductCard } from "@/components/site/ProductCard";
 import { QuoteForm } from "@/components/site/QuoteForm";
@@ -33,16 +35,50 @@ function SectionHeading({ eyebrow, title, text, center = false }: { eyebrow: str
   );
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang: raw } = await params;
+  const lang: Locale = isLocale(raw) ? raw : "fr";
+  const t = getDictionary(lang);
+  return {
+    title: { absolute: t.meta.title },
+    description: t.meta.description,
+    alternates: localeAlternates(lang, ""),
+  };
+}
+
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang: raw } = await params;
   const lang: Locale = isLocale(raw) ? raw : "fr";
   const t = getDictionary(lang);
   const base = `/${lang}`;
+  const siteUrl = getSiteUrl();
 
   const featured = await getCachedFeaturedProducts();
 
+  const localBusinessJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: site.name,
+    description: t.meta.description,
+    url: `${siteUrl}/${lang}`,
+    image: `${siteUrl}/hero.jpg`,
+    telephone: site.phone,
+    sameAs: [`https://wa.me/${site.whatsapp}`],
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: t.contact.address,
+      addressLocality: "Ben Arous",
+      addressRegion: "Tunis",
+      addressCountry: "TN",
+    },
+    areaServed: { "@type": "Country", name: "Tunisia" },
+    openingHours: "Mo-Sa 08:00-18:00",
+    priceRange: "TND",
+  };
+
   return (
     <div className="flex flex-col w-full">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessJsonLd) }} />
       {/* HERO */}
       <section className="relative w-full overflow-hidden bg-primary text-on-primary">
         <div
@@ -373,7 +409,9 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
                   <div className="flex-1">
                     <div className="font-label-code text-label-code text-on-surface-variant uppercase font-bold">{t.contact.phoneLabel}</div>
                     <div className="font-headline-sm text-headline-sm text-primary font-bold mt-0.5" dir="ltr">
-                      {site.phone} / {site.phone2}
+                      <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="hover:text-secondary transition-colors">
+                        {site.phone}
+                      </a>
                     </div>
                     <div className="font-body-sm text-body-sm text-outline mt-0.5">{t.contact.phoneHint}</div>
                   </div>

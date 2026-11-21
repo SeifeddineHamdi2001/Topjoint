@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.env
+.env.local
+.env.*.local
+storage
+*.tsbuildinfo
+next-env.d.ts
+.claude
+.vscode
+tests
+DOCUMENTATION.md
+PLAN.md
+README.md
+npm-debug.log*

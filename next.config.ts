@@ -45,10 +45,13 @@ const baseHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
-  ...(isProd ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }] : []),
+  ...(isProd ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" }] : []),
 ];
 
 const nextConfig: NextConfig = {
+  ...(process.env.NEXT_OUTPUT === "standalone" || process.platform !== "win32"
+    ? { output: "standalone" as const }
+    : {}),
   poweredByHeader: false,
   experimental: {
     // Quote attachments and product photos go through Server Actions.

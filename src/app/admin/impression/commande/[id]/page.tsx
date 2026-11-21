@@ -25,7 +25,6 @@ export default async function DeliverySlipPage({ params }: { params: Promise<{ i
           <Logo name={site.name} image={settings?.logoImage ?? ""} />
           <div className="mt-3 text-on-surface-variant space-y-0.5" dir="ltr">
             <div>{site.phone}</div>
-            <div>{site.email}</div>
           </div>
         </div>
         <div className="text-end">

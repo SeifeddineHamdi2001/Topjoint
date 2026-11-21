@@ -26,6 +26,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip API routes, Next internals and static files (anything with a dot).
-  matcher: ["/((?!api|_next|.*\..*).*)"],
+  // Skip API routes, Next internals, metadata/app icons, and static files (anything with a dot).
+  matcher: ["/((?!api|_next|icon|apple-icon|opengraph-image|twitter-image|.*\\..*).*)"],
 };
