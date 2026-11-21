@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { overscroll-behavior: none; }
+  /* Fixed header height: keep anchored sections visible under it. */
+  section[id] { scroll-margin-top: 150px; }
+  /* Letter-spacing breaks Arabic letter joining. */
+  [dir="rtl"] * { letter-spacing: 0 !important; }
+}
+
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("/fonts/material-symbols-outlined.woff2") format("woff2");
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Directional icons (arrows) point the other way in Arabic. */
+[dir="rtl"] .flip-rtl { transform: scaleX(-1); }
+
+.field {
+  @apply w-full h-11 px-3.5 bg-surface-container-low rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline border border-transparent focus:outline-none focus:border-primary-container focus:bg-surface-container-lowest shadow-sm transition-all;
+}
+.field-label {
+  @apply block font-label-code text-label-code uppercase tracking-wider text-on-surface-variant font-bold mb-1.5;
+}

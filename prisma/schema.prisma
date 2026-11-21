@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Status keys are labelled in src/config/admin.ts.
+enum QuoteStatus {
+  NEW
+  IN_PROGRESS
+  QUOTED
+  CLOSED
+}
+
+// Cash-on-delivery flow: NEW → (call) → CONFIRMED / NO_ANSWER / CANCELLED → SHIPPED → DELIVERED or RETURNED.
+enum OrderStatus {
+  NEW
+  NO_ANSWER
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  RETURNED
+  CANCELLED
+}
+
+// Submissions of the homepage "demande de devis & contact" form.
+model QuoteRequest {
+  id             Int         @id @default(autoincrement())
+  name           String      @db.VarChar(120)
+  company        String?     @db.VarChar(160)
+  email          String      @db.VarChar(160)
+  phone          String      @db.VarChar(30)
+  subject        String      @db.VarChar(40) // devis-sur-mesure | commande-standard | grande-serie | autre
+  message        String      @db.Text
+  locale         String      @db.VarChar(2) // fr | ar — language the visitor used
+  attachmentName String?     @db.VarChar(255) // original file name
+  attachmentPath String?     @unique @db.VarChar(64) // stored file name inside storage/private
+  status         QuoteStatus @default(NEW)
+  adminNote      String?     @db.Text
+  handledAt      DateTime?   @db.Timestamptz(3) // first time it left NEW — used for the average response time
+  createdAt      DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model Product {
+  id            Int         @id @default(autoincrement())
+  ref           String      @unique @db.VarChar(40)
+  slug          String      @unique @db.VarChar(120)
+  nameFr        String      @db.VarChar(200)
+  nameAr        String      @db.VarChar(200)
+  descriptionFr String      @default("") @db.Text
+  descriptionAr String      @default("") @db.Text
+  category      String      @db.VarChar(40) // joint type — see src/config/catalog.ts
+  application   String      @default("automobile") @db.VarChar(40) // automobile | moto | marine | custom
+  material      String      @default("") @db.VarChar(100) // optional material (fibre, MLS, cuivre...)
+  kind          String      @default("standard") @db.VarChar(20) // standard | combo
+  comboCulasseId Int?
+  comboCulasse   Product?   @relation("ComboCulasse", fields: [comboCulasseId], references: [id], onDelete: SetNull)
+  comboChemiseId Int?
+  comboChemise   Product?   @relation("ComboChemise", fields: [comboChemiseId], references: [id], onDelete: SetNull)
+  combosAsCulasse Product[] @relation("ComboCulasse")
+  combosAsChemise Product[] @relation("ComboChemise")
+  dimensions    String      @default("") @db.VarChar(200)
+  compatibility String      @default("") @db.VarChar(200)
+  cc            Int? // engine displacement (cylindrée): 50, 125 or 150
+  priceMillimes Int // base price, used when no épaisseur is defined; TND = 85000
+  stock         Int         @default(0)
+  image         String      @default("") @db.VarChar(300)
+  featured      Boolean     @default(false)
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @db.Timestamptz(3)
+  variants      ProductThickness[]
+  orderItems    OrderItem[]
+
+  @@index([category, active])
+  @@index([application, active])
+  @@index([kind, active])
+  @@index([comboCulasseId])
+  @@index([comboChemiseId])
+  @@index([active, featured])
+  @@index([active, createdAt])
+  @@index([active, priceMillimes])
+  @@index([active, stock])
+  @@index([cc])
+}
+
+// One épaisseur (mm) with its own selling price. The customer must pick one
+// when a product has variants; otherwise the product uses Product.priceMillimes.
+model ProductThickness {
+  id            Int     @id @default(autoincrement())
+  productId     Int
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mm            String  @db.VarChar(30)
+  priceMillimes Int
+  position      Int     @default(0)
+
+  @@unique([productId, mm])
+  @@index([productId])
+}
+
+model Order {
+  id                 Int          @id @default(autoincrement())
+  customerName       String       @db.VarChar(120)
+  phone              String       @db.VarChar(30)
+  email              String?      @db.VarChar(160)
+  address            String       @db.VarChar(300)
+  city               String?      @db.VarChar(120) // no longer asked at checkout
+  note               String?      @db.Text
+  locale             String       @db.VarChar(2)
+  deliveryMillimes   Int          @default(0) // included in totalMillimes
+  discountMillimes   Int          @default(0) // quantity + combo discount, already subtracted from totalMillimes
+  totalMillimes      Int
+  status             OrderStatus  @default(NEW)
+  adminNote          String?      @db.Text
+  stockDeducted      Boolean      @default(false) // true while the items are taken out of Product.stock
+  callAttempts       Int          @default(0) // confirmation calls made to the customer
+  lastCallAt         DateTime?    @db.Timestamptz(3)
+  // Meta ads: the customer's browser details captured at checkout, used to send the Purchase
+  // through the Conversions API once the order is confirmed by phone (see src/lib/meta.ts).
+  metaVisitor        Json?
+  metaPurchaseSentAt DateTime?    @db.Timestamptz(3)
+  createdAt          DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime     @updatedAt @db.Timestamptz(3)
+  items              OrderItem[]
+  events             OrderEvent[]
+
+  @@index([status, createdAt])
+  @@index([status, updatedAt])
+  @@index([status, lastCallAt])
+  @@index([createdAt])
+  @@index([phone])
+}
+
+model OrderItem {
+  id                Int      @id @default(autoincrement())
+  orderId           Int
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         Int?
+  product           Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  ref               String   @db.VarChar(40)
+  name              String   @db.VarChar(200)
+  thickness         String?  @db.VarChar(30) // chosen épaisseur in mm
+  unitPriceMillimes Int
+  quantity          Int
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Order timeline shown on the admin order page (creation, status changes, stock moves).
+model OrderEvent {
+  id        Int          @id @default(autoincrement())
+  orderId   Int
+  order     Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus?
+  message   String       @db.VarChar(300)
+  actor     String?      @db.VarChar(160) // admin e-mail or staff name; null = customer / system
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+
+  @@index([orderId, createdAt])
+}
+
+// Shop-wide values editable in /admin/reglages (keys and defaults in src/lib/settings.ts).
+model Setting {
+  key       String   @id @db.VarChar(60)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+// Staff accounts: they handle orders only. The owner account stays in .env (ADMIN_EMAIL / ADMIN_PASSWORD).
+model StaffUser {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(120)
+  email        String    @unique @db.VarChar(160)
+  passwordHash String    @db.VarChar(200)
+  active       Boolean   @default(true)
+  tokenVersion Int       @default(0)
+  lastLoginAt  DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+}
+
+// Revoked admin session IDs (jti) stored until JWT expiry so logout invalidates stolen cookies.
+model RevokedToken {
+  jti       String   @id @db.VarChar(64)
+  expiresAt DateTime @db.Timestamptz(3)
+
+  @@index([expiresAt])
+}
+
+// Sliding-window login failure tracking and temporary lockouts.
+model LoginLimit {
+  key         String    @id @db.VarChar(255)
+  failures    Int       @default(0)
+  windowStart DateTime  @db.Timestamptz(3)
+  lockedUntil DateTime? @db.Timestamptz(3)
+
+  @@index([windowStart])
+}
+
+// Security & administrative audit trail (append-only; owner-visible in /admin/audit).
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorEmail String?  @db.VarChar(160)
+  actorRole  String?  @db.VarChar(20)
+  action     String   @db.VarChar(64)
+  target     String?  @db.VarChar(120)
+  ip         String?  @db.VarChar(45)
+  detail     String?  @db.VarChar(500)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([actorEmail, createdAt])
+}
