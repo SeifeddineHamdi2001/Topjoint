@@ -154,8 +154,8 @@ export const fr = {
     whatsappHint: "Envoi instantané de photos et cotes",
     open: "Ouvrir",
     addressLabel: "Adresse de l'atelier",
-    address: "Zone Industrielle de Ben Arous, Route de Sousse GP1, Tunis",
-    mapLabel: "Top Joint • Tunis, Tunisie",
+    address: "Sidi Ameur, Route R100, Sahline, Monastir",
+    mapLabel: "Top Joint • Sidi Ameur, Sahline, Monastir",
   },
   form: {
     title: "Formulaire de demande de devis & contact",

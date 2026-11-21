@@ -67,10 +67,16 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
     address: {
       "@type": "PostalAddress",
       streetAddress: t.contact.address,
-      addressLocality: "Ben Arous",
-      addressRegion: "Tunis",
+      addressLocality: "Sidi Ameur, Sahline",
+      addressRegion: "Monastir",
       addressCountry: "TN",
     },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: site.mapsCoords.lat,
+      longitude: site.mapsCoords.lng,
+    },
+    hasMap: site.mapsUrl,
     areaServed: { "@type": "Country", name: "Tunisia" },
     openingHours: "Mo-Sa 08:00-18:00",
     priceRange: "TND",
@@ -441,7 +447,14 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
                   </div>
                   <div>
                     <div className="font-label-code text-label-code text-on-surface-variant uppercase font-bold">{t.contact.addressLabel}</div>
-                    <div className="font-body-md text-body-md text-primary font-bold mt-0.5">{t.contact.address}</div>
+                    <a
+                      href={site.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block font-body-md text-body-md text-primary hover:text-secondary font-bold mt-0.5 transition-colors"
+                    >
+                      {t.contact.address}
+                    </a>
                     <div className="font-body-sm text-body-sm text-outline mt-0.5">{t.topbar.hours}</div>
                   </div>
                 </div>
@@ -449,7 +462,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
               <div className="rounded-xl overflow-hidden shadow-sm h-56 relative bg-surface-container">
                 <iframe
                   title={t.contact.mapLabel}
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(site.mapsQuery)}&output=embed`}
+                  src={`https://www.google.com/maps?cid=${site.mapsCid}&hl=${lang}&output=embed`}
                   className="w-full h-full border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"

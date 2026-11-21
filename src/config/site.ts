@@ -3,7 +3,10 @@ export const site = {
   name: "Top Joint",
   phone: "+216 20 831 260",
   whatsapp: "21620831260", // international format without "+", used for wa.me links
-  mapsQuery: "Zone Industrielle Ben Arous Tunis Tunisie",
+  mapsCid: "13501475796192478860",
+  mapsUrl:
+    "https://www.google.com/maps/place/Top+joint+Sidi+amer/@35.7339222,10.7012071,17z/data=!4m6!3m5!1s0x13020b00656c46bd:0xbb5ee0b3e796468c!8m2!3d35.7339222!4d10.7012071!16s%2Fg%2F11mcs3h_sr",
+  mapsCoords: { lat: 35.7339222, lng: 10.7012071 },
 };
 
 export function getSiteUrl(): string {
